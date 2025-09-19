@@ -27,7 +27,8 @@ namespace snow{
         std::string getPath() const {return path_;}
         std::string getQuery() const {return query_;}
         std::string getFragment() const {return fragment_;}
-
+        
+        void setPath(const std::string & path) {path_ = std::move(path_);}
     private:
         std::string scheme_;
         std::string host_;

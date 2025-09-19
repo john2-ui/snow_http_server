@@ -3,6 +3,11 @@
 
 #include <map>
 #include <string>
+#include "Uri.h"
+#include <cstdint>
+#include <algorithm>
+#include <stdexcept>
+#include <sstream>
 
 namespace snow {
     enum class HttpMethod {
@@ -56,11 +61,12 @@ namespace snow {
 
     //包含处理enum classes和string之间转换的工具函数
     class HttpUtility {
-        static std::string to_string(HttpVersion version);
+    public:
+        static std::string To_String(HttpVersion version);
 
-        static std::string to_string(HttpMethod method);
+        static std::string To_String(HttpMethod method);
 
-        static std::string to_string(HttpStatusCode code);
+        static std::string To_String(HttpStatusCode code);
 
         static HttpMethod string_to_method(std::string method);
 
@@ -117,6 +123,14 @@ namespace snow {
             return content_.length();
         }
 
+        //version 
+        HttpVersion getVersion() const {
+            return version_;
+        }
+
+        void setVersion(HttpVersion version) {
+            version_ = version;
+        }
     protected:
         HttpVersion version_;                       //http版本号
         std::map <std::string, std::string> headers_;//头部
@@ -136,7 +150,7 @@ namespace snow {
 
         //set Method
         void setMethod(HttpMethod new_method) {
-            method_ = method;
+            method_ = new_method;
         }
 
         void setUri(Uri new_uri) {
@@ -164,7 +178,7 @@ namespace snow {
 
     class HttpResponse : public HttpMessageInterface {
     public:
-        HttpResponse() : status_code_(HttpStatusCode::OK) {}
+        HttpResponse() : status_code_(HttpStatusCode::Ok) {}
 
         ~HttpResponse() = default;
 
@@ -179,8 +193,7 @@ namespace snow {
         }
 
         //友元函数
-        friend std::string
-        HttpResponseToString(HttpResponse &response, bool sent_content = true);//HttpResponse可以选择性发送内容返回
+        friend std::string HttpResponseToString(HttpResponse &response, bool sent_content);//友元函数声明里面不能写默认参数
         friend HttpResponse StringToHttpResponse(const std::string &response_string);
 
     private:
