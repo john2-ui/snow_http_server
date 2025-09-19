@@ -51,41 +51,148 @@ namespace snow {
         BadGateway = 502,
         ServiceUnvailable = 503,
         GatewayTimeout = 504,
-        HttpVersionNotSupported = 505 
+        HttpVersionNotSupported = 505
     };
 
     //包含处理enum classes和string之间转换的工具函数
     class HttpUtility {
         static std::string to_string(HttpVersion version);
+
         static std::string to_string(HttpMethod method);
+
         static std::string to_string(HttpStatusCode code);
+
         static HttpMethod string_to_method(std::string method);
+
         static HttpVersion string_to_version(std::string version);
-        static HttpStatusCode string_to_code(std::string code);
+
+        static HttpStatusCode string_to_code(uint32_t code);
     };
 
     //HttpRequest和HttpResponse的公共基类，包含两者都有的成员
     class HttpMessageInterface {
-        public:
-            HttpMessageInterface() : version_(HttpVersion::HTTP_1_1){}
-            virtual ~HttpMessageInterface() = default;
+    public:
+        HttpMessageInterface() : version_(HttpVersion::HTTP_1_1) {}
 
-            //header methods
-            void setHeader(const std::string & key, const std::string & value) {
-                headers_[key] = std::move(value);
-            }
-            
-            void removeHeader(const std::string & key){
-                headers_.erase(key);
-            }
+        virtual ~HttpMessageInterface() = default;
 
-            void clearHeaders() {
-                headers_.clear();
-            }
-        protected:
-            HttpVersion version_;                       //http版本号
-            std::map<std::string, std::string> headers_;//头部
-            std::string content_;                       //消息体
+        //header methods
+        void setHeader(const std::string &key, const std::string &value) {
+            headers_[key] = std::move(value);
+        }
+
+        void removeHeader(const std::string &key) {
+            headers_.erase(key);
+        }
+
+        void clearHeaders() {
+            headers_.clear();
+        }
+
+        std::string getHeadersValue(const std::string &key) {
+            if (headers_.count(key) > 0) return headers_.at(key);
+            return std::string{};
+        }
+
+        std::map <std::string, std::string> getHeaders() const {
+            return headers_;
+        }
+
+        //Content functions
+        std::string getContent() const {
+            return content_;
+        }
+
+        void setContent(const std::string &content) {
+            content_ = std::move(content);
+            setContentLength();
+        }
+
+        void clearContent() {
+            content_.clear();
+            setContentLength();
+        }
+
+        size_t getContent_length() const {
+            return content_.length();
+        }
+
+    protected:
+        HttpVersion version_;                       //http版本号
+        std::map <std::string, std::string> headers_;//头部
+        std::string content_;                       //消息体
+
+        //如果需要发送content，就需要设置content length
+        void setContentLength() {
+            setHeader("Content-Length", std::to_string(content_.length()));
+        }
     };
+
+    class HttpRequest : public HttpMessageInterface {
+    public:
+        HttpRequest() : method_(HttpMethod::GET) {}
+
+        ~HttpRequest() = default;
+
+        //set Method
+        void setMethod(HttpMethod new_method) {
+            method_ = method;
+        }
+
+        void setUri(Uri new_uri) {
+            uri_ = std::move(new_uri);
+        }
+
+        //get method
+        HttpMethod getMethod() const {
+            return method_;
+        }
+
+        Uri getUri() const {
+            return uri_;
+        }
+
+        //友元函数
+        friend std::string HttpRequestToString(HttpRequest &request);
+
+        friend HttpRequest StringToHttpRequest(const std::string &request_string);
+
+    private:
+        HttpMethod method_;
+        Uri uri_;
+    };
+
+    class HttpResponse : public HttpMessageInterface {
+    public:
+        HttpResponse() : status_code_(HttpStatusCode::OK) {}
+
+        ~HttpResponse() = default;
+
+        //set method
+        void setStatusCode(HttpStatusCode code) {
+            status_code_ = code;
+        }
+
+        //get method
+        HttpStatusCode getStatusCode() const {
+            return status_code_;
+        }
+
+        //友元函数
+        friend std::string
+        HttpResponseToString(HttpResponse &response, bool sent_content = true);//HttpResponse可以选择性发送内容返回
+        friend HttpResponse StringToHttpResponse(const std::string &response_string);
+
+    private:
+        HttpStatusCode status_code_;
+    };
+
+    //Utility functions声明为类的友元函数是因为不希望把这个接口暴露在外，同时这些函数需要访问类的私有成员
+    //用于把HttpRequest & HttpResponse和string之间相互转化
+    //实现客户端和服务端之间收发消息的工具函数
+    std::string HttpRequestToString(HttpRequest &request);
+    std::string HttpResponseToString(HttpResponse &response, bool sent_content = true);//HttpResponse可以选择性发送内容返回
+    HttpRequest StringToHttpRequest(const std::string &request_string);
+    HttpResponse StringToHttpResponse(const std::string &response_string);
 }
 #endif // HTTP_MESSAGE_H
