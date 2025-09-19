@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <sstream>
 #include <string>
-
+namespace snow {
 Uri::Uri(const std::string & uri_str){
     std::istringstream ss(uri_str);
     std::string temp;
@@ -51,3 +51,4 @@ Uri::Uri(const std::string & uri_str){
 //     std::cout << "Path: " << uri.getPath() << "\n";
 //     return 0;
 // }
+}
