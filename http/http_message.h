@@ -131,6 +131,7 @@ namespace snow {
         void setVersion(HttpVersion version) {
             version_ = version;
         }
+
     protected:
         HttpVersion version_;                       //http版本号
         std::map <std::string, std::string> headers_;//头部
